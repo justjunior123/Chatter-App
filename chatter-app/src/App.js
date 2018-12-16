@@ -22,6 +22,7 @@ class App extends React.Component {
     this.sendMessage = this.sendMessage.bind(this) // this allows us to enable the send message function and have access to 'this' keyword
     this.subscribeToRoom = this.subscribeToRoom.bind(this)
     this.getRooms = this.getRooms.bind(this)
+    this.createRoom = this.createRoom.bind(this)
   }
 
   componentDidMount() {
@@ -50,6 +51,15 @@ class App extends React.Component {
         text: text,
         roomId: this.state.roomId
       })
+    }
+
+    createRoom(roomName){
+      // todo
+      this.currentUser.createRoom({
+        name: roomName,
+      })
+      .then(room => this.subscribeToRoom(room.id))
+      .catch(err => console.log('Error Creating new room', err))
     }
 
     getRooms(){
@@ -95,9 +105,13 @@ class App extends React.Component {
           roomId={this.state.roomId}
           subscribeToRoom = {this.subscribeToRoom}
           rooms={[...this.state.joinableRooms,...this.state.joinedRooms]} />
-        <MessageList messages={ this.state.messages } />
-        <SendMessageForm sendMessage={ this.sendMessage} /> {/* Inverse data flow concept, we are sending this.sendMessage down as a*/}
-        <NewRoomForm /> {/* prop to the SendMessageForm component. Allowing the child component to have access to the method*/}
+        <MessageList
+          roomId={ this.state.roomId}
+          messages={ this.state.messages } />
+        <SendMessageForm
+          disabled={!this.state.roomId}
+          sendMessage={ this.sendMessage} /> {/* Inverse data flow concept, we are sending this.sendMessage down as a*/}
+        <NewRoomForm createRoom={ this.createRoom }/> {/* prop to the SendMessageForm component. Allowing the child component to have access to the method*/}
       </div>
     );
   }
