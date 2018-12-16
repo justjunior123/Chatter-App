@@ -14,9 +14,14 @@ class App extends React.Component {
   constructor(){
     super()
     this.state = {
-      messages: []
+      roomId: null,
+      messages: [],
+      joinableRooms: [],
+      joinedRooms: []
     }
     this.sendMessage = this.sendMessage.bind(this) // this allows us to enable the send message function and have access to 'this' keyword
+    this.subscribeToRoom = this.subscribeToRoom.bind(this)
+    this.getRooms = this.getRooms.bind(this)
   }
 
   componentDidMount() {
@@ -27,27 +32,14 @@ class App extends React.Component {
                 url: 'https://us1.pusherplatform.io/services/chatkit_token_provider/v1/d8d6200d-b084-4b17-afcd-e65a33d5ef60/token'
             })
         })
-        // console.log(chatManager);
+
         chatManager.connect().then(currentUser => {
-            this.currentUser = currentUser // takes the current user and hoods it to the component itself
-            this.currentUser.subscribeToRoom({
-            roomId: '19378706',
-            messageLimit: 10,
-            hooks: {
-                onMessage: message => {
-                    console.log('message.text: ', message.text);
-                    this.setState({
-                      messages: [...this.state.messages,message]
-                    })
-                }
-            }
-        })
-        console.log('Print chatManager',chatManager);
+            this.currentUser = currentUser // takes the current user and hooks it to the component itself
+            this.getRooms()
+
         console.log('Successful connection', currentUser)
         })
-        .catch(err => {
-        console.log('Error on connection', err)
-        })
+        .catch(err => console.log('Error on connection', err))
     }
 
     // By convention data flows in one direction from parent component to child. However we need to extract the data that is coming
@@ -56,15 +48,53 @@ class App extends React.Component {
     sendMessage(text){
       this.currentUser.sendMessage({
         text: text,
-        roomId: '19378706'
+        roomId: this.state.roomId
       })
     }
+
+    getRooms(){
+      this.currentUser.getJoinableRooms().then(joinableRooms => {
+        this.setState({
+          joinableRooms: joinableRooms,
+          joinedRooms: this.currentUser.rooms
+        })
+      })
+      .catch(err => console.log('error on joinableRooms',err))
+    }
+
+    subscribeToRoom(roomId){
+      this.setState({ messages: [] })
+      this.currentUser.subscribeToRoom({
+        roomId: roomId,
+        messageLimit: 10,
+        hooks: {
+            onMessage: message => {
+                console.log('message.text: ', message.text);
+                this.setState({
+                  messages: [...this.state.messages,message]
+                })
+              }
+        }
+      })
+      .then(room => {
+        this.setState({
+          roomId: room.id
+        })
+        this.getRooms()
+
+      })
+      .catch(err => console.log('error on subsribing to room',err))
+    }
+
 
   render() {
     console.log(this.state.messages);
     return (
       <div className="App">
-        <RoomList />
+        <RoomList
+          roomId={this.state.roomId}
+          subscribeToRoom = {this.subscribeToRoom}
+          rooms={[...this.state.joinableRooms,...this.state.joinedRooms]} />
         <MessageList messages={ this.state.messages } />
         <SendMessageForm sendMessage={ this.sendMessage} /> {/* Inverse data flow concept, we are sending this.sendMessage down as a*/}
         <NewRoomForm /> {/* prop to the SendMessageForm component. Allowing the child component to have access to the method*/}
