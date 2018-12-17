@@ -39,7 +39,7 @@ class SendMessageForm extends React.Component {
           onChange= { this.handleChange }
           value= {this.state.message}
           type="text"
-          placeholder="Type message and hit Enter"  />
+          placeholder="Type message and hit Enter / Return on mobile"  />
 
       </form>
     )

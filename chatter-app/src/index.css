@@ -189,6 +189,9 @@
 }
 /*  Responsive Design */
 @media (min-width:10px) {
+  .join-room-text {
+    font-size: .95em;
+  }
 
   .message {
     width: 20em;
